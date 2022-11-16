@@ -59,7 +59,9 @@ combined_df = combine(combined_output_filepath, df1, df2, df3, df4, df5, df6)
 #combined_df = create_gradient(combined_df, "400kmDensity", features = using_features)
 #combined_df["constant"] = 1
 
-run_random_forest("/Users/vivianliu/Documents/NASA_data/random_forest_files/combined_data_all_reduced_omni.csv", "400kmDensity", features = using_features, drop_features = dropping, test_portion = 0.25, plot = True)
+fn = "E:\\VL_sdrag\\combined_data_all_reduced_omni.csv"
+
+run_random_forest(fn, "400kmDensity", features = using_features, drop_features = dropping, test_portion = 0.25, plot = True)
 
 #run_gradient_boost("/Users/vivianliu/Documents/NASA_data/random_forest_files/combined_data_all_reduced_omni.csv", "400kmDensity", features = using_features, drop_features = dropping, test_portion = 0.25, plot = True)
 
