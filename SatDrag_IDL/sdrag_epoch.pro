@@ -37,11 +37,11 @@ pro sdrag_epoch
   ;['V','FP','BZ_GSM','DST','AE']
   ; and the structure tag that holds the time for variables in themis format is
   ;date_themis
-  epoch_o1hr = get_epoch_data(om_dat,time_double(slist.t1),time_double(slist.t3),time_double(slist.t2), 30,120,1,['V','FP','BZ_GSM','DST','AE'],t_tags='date_themis')
+  epoch_o1hr = get_epoch_data(om_dat,time_double(slist.t1),time_double(slist.t3),time_double(slist.t2), 30,120,1,['V','FP','BZ_GSM','DST','AE','KP'],t_tags='date_themis')
   epoch_sd = get_epoch_data(sd_dat,time_double(slist.t1),time_double(slist.t3),time_double(slist.t2), 30,120,1,['D400','F107','S_LA','S_MG','S_IR'],t_tags='t_th')
   
 
-  window, 9, xsize = 550, ysize = 700
+  window, 9, xsize = 550, ysize = 900
   !p.charsize = 1.75
   !x.style = 1
   !y.style = 1
@@ -49,7 +49,7 @@ pro sdrag_epoch
   !y.margin = [0.,0.5]
   !y.omargin = [5,2]
 
-  !p.multi = [0,1,5]
+  !p.multi = [0,1,6]
   !x.omargin = [0,0]
   !x.margin = [15,10]
 
@@ -61,8 +61,11 @@ pro sdrag_epoch
   oplot, [0,0],!y.crange, linestyle = 2
   vplot2, epoch_o1hr.dst.ep1, epoch_o1hr.dst.ep2, xtickf='no_ticks', ytitle = 'Sym H!CnT', xcharsize = xc, ycharsize=yc,ylog=0, xrange=xrange
   oplot, [0,0],!y.crange, linestyle = 2
+  vplot2, epoch_o1hr.kp.ep1, epoch_o1hr.kp.ep2, xtickf='no_ticks', ytitle = 'Kp!CnT', xcharsize = xc, ycharsize=yc,ylog=0, xrange=xrange
+  oplot, [0,0],!y.crange, linestyle = 2
   vplot2, epoch_o1hr.ae.ep1, epoch_o1hr.ae.ep2, ytitle = 'AE!CnT', xcharsize = xc, ycharsize=yc,ylog=0, xrange=xrange
   oplot, [0,0],!y.crange, linestyle = 2
+  
   
   window, 10, xsize = 550, ysize = 700
   !p.multi = [0,1,5]

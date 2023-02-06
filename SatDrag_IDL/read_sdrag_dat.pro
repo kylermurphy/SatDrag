@@ -89,8 +89,6 @@ function read_sdrag_dat, $
     s_mg = s_mg[st_i]
     s_ir = s_ir[st_i]  
   endif
-
-  stop
   
   r_dat = {t_th:t_th, d400:d400, f107:f107, s_la:s_la, s_mg:s_mg, s_ir:s_ir}
   
