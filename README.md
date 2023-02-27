@@ -26,3 +26,7 @@ A hiresolution data set also exists [here](https://lasp.colorado.edu/lisird/data
 # MSIS
 
 [Mass Spectrometer and Incoherent Scatter model](https://kauai.ccmc.gsfc.nasa.gov/CMR/view/model/SimulationModel?resourceID=spase://CCMC/SimulationModel/NRLMSIS/v2.0). Empirical atmospheric model that extends from the ground to the exobase and describes the average observed behavior of temperature, 8 species densities, and mass density via a parametric analytic formulation.
+
+# JBM2008
+
+The JB2008 model provides neutral density in the thermosphere using global exospheric temperatureequations driven by four solar indices/proxies to represent different solar heating sources (Bowman et al., 2008; Tobiska et al., 2008).
