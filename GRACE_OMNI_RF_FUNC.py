@@ -5,17 +5,17 @@ Created on Thu Jul 14 11:29:57 2022
 
 @author: vivianliu
 """
-from read_omni_function import *
-from read_GRACE_CHAMP_function import *
-from combine_function import *
-from run_random_forest_function import *
-from read_OMNI_1HR import *
-from read_FISM import *
-from read_mgii import *
-from gradient import *
-from read_MSIS import *
-from gradient_booster import *
-import sklearn
+#from read_omni_function import *
+#from read_GRACE_CHAMP_function import *
+#from combine_function import *
+#from run_random_forest_function import *
+#from read_OMNI_1HR import *
+#from read_FISM import *
+#from read_mgii import *
+#from gradient import *
+#from read_MSIS import *
+#from gradient_booster import *
+#import sklearn
 
 grace_data_filepath = "/Users/vivianliu/Documents/NASA_data/GRACE_B_data_files"
 omni_data_filepath = "/Users/vivianliu/Documents/NASA_data/OMNI_data_files"
@@ -60,6 +60,7 @@ combined_df = combine(combined_output_filepath, df1, df2, df3, df4, df5, df6)
 #combined_df["constant"] = 1
 
 fn = "E:\\VL_sdrag\\combined_data_all_reduced_omni.csv"
+fn = "D:\\data\\VL_sdrag\\combined_data_all_reduced_omni.csv"
 
 run_random_forest(fn, "400kmDensity", features = using_features, drop_features = dropping, test_portion = 0.25, plot = True)
 
