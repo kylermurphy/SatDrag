@@ -37,6 +37,7 @@ def run_random_forest(data, target_variable, features = all, drop_features = Non
     elif (type(data) == str):
         merged_df = pd.read_csv(data)
     
+    merged_df = merged_df.sample(500000)
     #Sort by data for easier reading
     merged_df = merged_df.sort_values(by = "Datetime")
     merged_df = merged_df.reset_index(drop = True)
@@ -193,7 +194,15 @@ def run_random_forest(data, target_variable, features = all, drop_features = Non
     
     
     
-    
+#using_features = ["irradiance (W/m^2/nm)", "STime", "MagTime", "SYM/H_INDEX_nT", "Height", "DAILY_F10.7_", "3-H_AP_nT", "3-H_KP*10_", "mg_index (core to wing ratio (unitless))", \
+#                  "SOLAR_LYMAN-ALPHA_W/m^2", "SLat", "AveDragCoef"]
+
+using_features = ["irradiance (W/m^2/nm)", "MagTime","SLat", "SYM/H_INDEX_nT", "1-M_AE_nT", "3-H_KP*10_"]
+dropping = ["year", "hour", "minute", "second"]
+
+fn = "D:\\data\\VL_sdrag\\combined_data_all_reduced_omni.csv"
+
+run_random_forest(fn, "400kmDensity", features = using_features, drop_features = dropping, test_portion = 0.25, plot = True)    
     
     
     
