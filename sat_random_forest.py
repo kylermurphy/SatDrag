@@ -2,12 +2,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import time
+import gc
 
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_absolute_percentage_error
+from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import GridSearchCV
@@ -17,27 +19,26 @@ rf_params = {
     "n_estimators": 500,
     "max_depth": None,
     "min_samples_split": 2,
-    "min_samples_leaf":20,
+    "min_samples_leaf":5,
     "warm_start":False,
     "oob_score":True,
     "random_state": rnd,
-    "max_features":4,
+    "max_features":0.5,
     "n_jobs":10
     }
 
 grid_space = {
-    "n_estimators": [10,25,50,75,100,150,300,500,750,1000],
+    "n_estimators": [300,500,750,1000],
     "max_depth": [None],
     "min_samples_split": [2],
-    "min_samples_leaf":[1,20],
-    "max_features":[1,2,4]
+    "min_samples_leaf":[2,5,10,20],
+    "max_features":[0.5,1,2,4]
     }
 
 def dat_create(dat, col, log_col, lt_col, y_col, t_col):
 
     x_dat = dat[col+[t_col]+[y_col]].dropna().copy()
-    y_dat = x_dat[y_col].copy()
-    x_dat = x_dat.drop(columns=y_col)
+    
 
     if log_col:
        for i in log_col:
@@ -53,7 +54,11 @@ def dat_create(dat, col, log_col, lt_col, y_col, t_col):
                 x_dat[f'sin_{i}'] = np.sin(dat[i]*2*np.pi/24.)
             except:
                 print(f'Could not add {i} as a cos/sin time column')
-        
+    
+    x_dat = x_dat[~x_dat.isin([np.nan, np.inf, -np.inf]).any(axis=1)].dropna()
+    y_dat = x_dat[y_col].copy()
+    x_dat = x_dat.drop(columns=y_col)    
+    
     return x_dat, y_dat
 
 def get_permimp(rf_model, rf_x, rf_y, 
@@ -61,7 +66,7 @@ def get_permimp(rf_model, rf_x, rf_y,
     
     t_te = permutation_importance(rf_model, rf_x, rf_y,
                 n_repeats=n_repeats, random_state=random_state, 
-                n_jobs=n_jobs)
+                n_jobs=n_jobs,scoring='r2')
     
     sorted_importances_idx = t_te.importances_mean.argsort()
     importances_te = pd.DataFrame(
@@ -84,12 +89,19 @@ def rf_model(col=['1300', 'SYM_H index','SatLat'],
     
     
     rnd = rf_params['random_state']
-
-    # create data sets
+    
+    kcol = [col,[y_col],[t_col],lt_col]
+    kflt = [item for sublist in kcol for item in sublist]
     df = pd.read_hdf(target_dat)
+    df = df[kflt].dropna()
 
     reg_x, reg_y = dat_create(dat=df,col=col,log_col=log_col,lt_col=lt_col,y_col=y_col,t_col=t_col)
     reg_y = reg_y*(10**12)
+    
+    del df
+    gc.collect
+
+    reg_x.shape
 
     # create data set from Grace A
     df_oos = pd.read_hdf(oos_dat)
@@ -124,24 +136,31 @@ def rf_model(col=['1300', 'SYM_H index','SatLat'],
     #Make predictions and calculate error
     predictions = rfr.predict(test_x)
     pre_oos = rfr.predict(oos_x)
+    pre_tr = rfr.predict(train_x)
 
     #the mean absolute error
     mea = mean_absolute_error(test_y, predictions)
     mae_oss = mean_absolute_error(oos_y,pre_oos)
+    mae_tr = mean_absolute_error(train_y,pre_tr)
 
     #mean absolute percentage error
     mape = mean_absolute_percentage_error(test_y, predictions)
     mape_oss = mean_absolute_percentage_error(oos_y,pre_oos)
+    mape_tr = mean_absolute_percentage_error(train_y,pre_tr)
 
-
+    med = median_absolute_error(test_y, predictions)
+    med_oss = median_absolute_error(oos_y,pre_oos)
+    med_tr = median_absolute_error(train_y,pre_tr)
 
     #Print r-squared score of model
     r2 = r2_score(test_y, predictions)
     r2_oos = r2_score(oos_y, pre_oos)
+    r2_tr = r2_score(train_y,pre_tr)
 
-    print(f"MAE test/oos: {mea:.3}/{mae_oss:.3}")
-    print(f"MAPE test/oos: {mape:.3}/{mape_oss:.3}")
-    print(f"Score test/oos: {r2:.3}/{r2_oos:.3}")
+    print(f"MAE train/test/oos: {mae_tr:.3}/{mea:.3}/{mae_oss:.3}")
+    print(f"MAPE train/test/oos: {mape_tr:.3}/{mape:.3}/{mape_oss:.3}")
+    print(f"MedAE train/test/oos: {med_tr:.3}/{med:.3}/{med_oss:.3}")
+    print(f"Score train/test/oos: {r2_tr:.3}/{r2:.3}/{r2_oos:.3}")
 
     #Examine feature importances
     feature_names = rfr.feature_names_in_
@@ -206,13 +225,23 @@ def rf_tune(col=['1300', 'SYM_H index','SatLat'],
              grid_space=grid_space, 
              target_dat='D:\\data\\SatDensities\\satdrag_database_grace_B.hdf5', 
              oos_dat='D:\\data\\SatDensities\\satdrag_database_grace_A.hdf5',
-             n_repeats=4):
+             n_repeats=4,
+             s_sz=100000,
+             scoring='neg_mean_absolute_error',
+             refit=True):
     
     # create data sets
+    kcol = [col,[y_col],[t_col],lt_col]
+    kflt = [item for sublist in kcol for item in sublist]
     df = pd.read_hdf(target_dat)
+    df = df[kflt].dropna().sample(s_sz)
 
-    reg_x, reg_y = dat_create(dat=df,col=col,log_col=log_col,lt_col=lt_col,y_col=y_col,t_col=t_col)
+    reg_x, reg_y = dat_create(dat=df,col=col,log_col=log_col,lt_col=lt_col,
+                              y_col=y_col,t_col=t_col)
     reg_y = reg_y*(10**12)
+
+    del df
+    gc.collect
 
     # create train test splits
     train_x, test_x, train_y, test_y = train_test_split(reg_x, reg_y, 
@@ -225,8 +254,9 @@ def rf_tune(col=['1300', 'SYM_H index','SatLat'],
     # create regressor
     rfr = RandomForestRegressor(random_state=17)
     print('Starting Grid Search')
-    grid = GridSearchCV(rfr,param_grid=grid_space,cv=3, verbose=2,
-                scoring='neg_mean_absolute_percentage_error', n_jobs=4, return_train_score=True)
+    grid = GridSearchCV(rfr,param_grid=grid_space,cv=3, verbose=4,
+                scoring=scoring, n_jobs=6, return_train_score=True,
+                refit=refit)
     model_grid = grid.fit(train_x,train_y)
 
     return model_grid
