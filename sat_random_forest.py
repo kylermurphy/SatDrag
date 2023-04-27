@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 import numpy as np
 import time
 import gc
 import pickle
+import os
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
@@ -336,7 +338,11 @@ def rf_tune(col=['1300_02', 'SYM_H index','SatLat'],
     return model_grid
 
 
-def rf_run():
+def rf_run(y_col='400kmDensity', 
+           lt_col=['SatMagLT'],
+           pre_f = False,
+           app_f = False
+           ):
     """
     Run a set of random forest models 
 
@@ -376,9 +382,20 @@ def rf_run():
     
     for col, d_in in zip(data_sets,data_labels):
         
-        rf_dat = rf_model(col=col, t_col=t_col, log_col=fi_log, n_repeats=n_repeats)
+        rf_dat = rf_model(y_col=y_col, lt_col=lt_col,
+                          col=col, t_col=t_col, log_col=fi_log, 
+                          n_repeats=n_repeats)
         
-        with open(o_dir+d_in+'_RFdat.pkl', 'wb') as f:
+        fn = f'{d_in}_RFdat'
+        if pre_f:
+            fn = f'{pre_f}{fn}'
+        if app_f:
+            fn = f'{fn}{app_f}'
+            
+        fn = f'{fn}.pkl'
+        fn = os.path.join(o_dir,fn)
+        
+        with open(fn, 'wb') as f:
             pickle.dump(rf_dat, f)
             
         del rf_dat
@@ -386,10 +403,15 @@ def rf_run():
     
     
     
-def metric_plot( ):
+def metric_plot(plot=True, 
+                sfig = False,
+                sdir = 'C:/Users/krmurph1/OneDrive/SatDrag_RF',
+                sname = 'Metric.pdf'):
     """
     Function to return a pandas DataFrame which contains
     the metrics for each of the models ran from rf_run( )
+    
+    Function also plots the residuals as a function of sample and model
     
     NOTE: If we introduce more models we can add parameters to the function
     to read in specific files
@@ -423,11 +445,47 @@ def metric_plot( ):
             t['Model'] = leg
     
         metr = pd.concat([metr,t])
+    
+    if plot:
+       sns.set_palette("Set2") 
         
+       x_col = 'Metric'
+       y_cols = ['r2','MedAE','MAE','MAPE']
+       hue = 'Model'
+       
+       xticks = ['Train', 'Test', 'OOS\nGrace A', 'OOS\nCHAMP']
+       y_lab = ['Correlation - $\mathregular{r^2}$','','','']
+       
+       f, axs = plt.subplots(1, len(y_cols), figsize=(11, 4), 
+                             gridspec_kw={'bottom':0.15})
+       
+       for ax, yc, yl in zip(axs,y_cols, y_lab):
+           sns.lineplot(data=metr,x=x_col,y=yc,hue=hue, ax=ax,
+                        legend=True)
+           ax.set(xlabel='',ylabel=yl)
+           ax.set_xticklabels(xticks)
+           
+           
+       f.supxlabel('Dataset/Sample', y=0.001)
+       axs[1].set(ylim=[0,0.5])
+       axs[2].set(ylim=[0,0.5])
+       axs[3].set(ylim=[0,0.5])
+       axs[2].set(yticklabels=[])
+       axs[3].yaxis.set_label_position("right")
+       axs[3].yaxis.tick_right()
+       
+       axs[1].set(ylabel='Metric')
+       axs[3].set(ylabel='Metric')
+       
+       sns.move_legend(axs[3], 'upper right', bbox_to_anchor=(1,1))
+       plt.tight_layout()
+       
+       if sfig:
+           f.savefig(os.path.join(sdir,sname), dpi=300, format='pdf')
     return metr    
     
     
-    
+
     
     
     
