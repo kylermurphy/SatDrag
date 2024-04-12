@@ -28,8 +28,8 @@ from scipy.optimize import curve_fit
 
 
 def gen_sat_data(sat: str='ch',
-                 sdate='2010-01-01',
-                 edate='2010-01-31',
+                 sdate='2002-01-01',
+                 edate='2014-01-01',
                  t_tol='5 second',
                  t_back= 40,
                  t_tot=None,
@@ -155,6 +155,8 @@ def gen_msis_profiles(sat: str='ch',
         reset_index(drop=True).copy()
     conj_dens = sat_dat.loc[conj_data['pos'],'dens_x_gr']. \
         reset_index(drop=True).copy()
+    conj_alts = sat_dat.loc[conj_data['pos'],'alt_gr']. \
+        reset_index(drop=True).copy()
     conj_lat = conj_data['lat_gr_near'].reset_index(drop=True).copy()
     conj_lon = conj_data['lon_gr_near'].reset_index(drop=True).copy()
     
@@ -164,7 +166,7 @@ def gen_msis_profiles(sat: str='ch',
     if alt_min > alt_max:
         alt_min=250
         alt_max=500
-    alts = np.linspace(alt_max,alt_min,alt_max-alt_min+1)
+    alts = np.linspace(alt_min,alt_max,alt_max-alt_min+1)
     
     # check if the msis profiles have already been generated
     msis_file = data_dir+f'msis_profiles_{sat}.npy'
@@ -186,9 +188,83 @@ def gen_msis_profiles(sat: str='ch',
         msis_dat = np.load(msis_file)
         
     
-    return msis_dat, conj_data, conj_date, conj_dens, alts
+    
+    return msis_dat, conj_data.reset_index(), conj_date, conj_dens, conj_alts, alts
+
+
+def exp_fit(x,j,h) -> float:
+    """
+    
+    Returns
+    -------
+    Function for exponential fit.
+    
+    """
+    return j*np.exp(-x/h)
+
+def lin_fit(x,a,b):
+    """
+
+    Returns
+    -------
+    Function for linear fit
+
+    """
+    return a*x+b
+
+    
+def den_norm(sat: str='ch',):
+    
+    # get the data for fitting
+    msis_d, conj_sdat, conj_date, conj_dens, conj_alts, alts = \
+        gen_msis_profiles(sat=sat)
+        
+        
+    
+    # fit a line to the msis density profiles so the
+    # exponential fit can be seeded
+    lin_d = [curve_fit(lin_fit,alts,np.log(den))[0] for den in msis_d]
+    
+    # fit an exponential to msis density profiles
+    exp_d = [
+            curve_fit(exp_fit,alts.astype('float64'),den.astype('float64'),
+            p0=[np.exp(lf[1]),-1/lf[0]])[0]
+            for den, lf in zip(msis_d, lin_d)
+            ]
+    
+    exp_d = np.array(exp_d)
+    
+    rho0 = conj_dens/np.exp(-conj_alts/1000./exp_d[:,1])
+    sat_den = rho0*np.exp(-conj_sdat[f'alt_{sat}'].to_numpy()/1000./exp_d[:,1])
+    
+    #TODO test everything below this
+    
+    conj_pos = [np.abs(alts-sat_alt/1000.).argmin() for sat_alt in conj_alts]
+    sat_pos = [np.abs(alts-sat_alt/1000.).argmin
+               for sat_alt in conj_sdat['alt_ch'].to_numpy()]
+    
+    den_ratio = conj_dens/msis_d[:,conj_pos]
+    sat_dens2 = den_ratio*msis_d[:,sat_pos]
     
     
-def den_norm():
+    return sat_den, conj_sdat.reset_index()
+
     
-    print('a')
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
