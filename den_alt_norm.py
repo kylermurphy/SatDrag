@@ -59,8 +59,8 @@ def gen_sat_data(sat: str='ch',
         sat_dat = sat_dat[cols]
     
         # create a database of champ and grace time matched observations
-        sat_dat = sat_dat.rename(columns={'DateTime':'DateTime_ch'})
-        sat_dat.index = sat_dat['DateTime_ch']
+        sat_dat = sat_dat.rename(columns={'DateTime':f'DateTime_{sat}'})
+        sat_dat.index = sat_dat[f'DateTime_{sat}']
     
         gr = gr.rename(columns={'DateTime':'DateTime_gr'})
         gr.index = gr['DateTime_gr']
@@ -160,12 +160,15 @@ def gen_msis_profiles(sat: str='ch',
     conj_lat = conj_data['lat_gr_near'].reset_index(drop=True).copy()
     conj_lon = conj_data['lon_gr_near'].reset_index(drop=True).copy()
     
+    sat_alts = conj_data[f'alt_{sat}']
+    
     del sat_dat
     
     # create altitudes for MSIS data
     if alt_min > alt_max:
         alt_min=250
         alt_max=500
+        
     alts = np.linspace(alt_min,alt_max,alt_max-alt_min+1)
     
     # check if the msis profiles have already been generated
@@ -175,21 +178,38 @@ def gen_msis_profiles(sat: str='ch',
     # derive profiles and save or open
     if not msis_path or gen:
         # derive profiles
-        # all profiles have the altitudes
+        # all profiles have the same altitudes
         # we only want total density which is element 0 of the
         # last dimension
-        msis_dat = [msis.run(date,lat,lon,alts)[0,0,0,:,0] \
-                    for date, lat, lon in zip(conj_date, conj_lat, conj_lon)]
         
-        msis_dat = np.array(msis_dat)
+        # for simplicity and so we have all data, do a normal run and a 
+        # storm run, geomagnetic_storm=-1
+        
+        # add the altitude of grace and the second satelite at the end
+        # of the altitude arrays
+        msis_dat = [
+            msis.run(date,lat,lon, \
+            np.append(alts,[c_alt/1000.,s_alt/1000.]))[0,0,0,:,0] \
+            for date, lat, lon, c_alt, s_alt, \
+            in zip(conj_date, conj_lat, conj_lon, conj_alts, sat_alts)
+                    ]
+            
+        msis_s = [
+            msis.run(date,lat,lon, \
+            np.append(alts,[c_alt/1000.,s_alt/1000.]), \
+            geomagnetic_activity=-1)[0,0,0,:,0] \
+            for date, lat, lon, c_alt, s_alt, \
+            in zip(conj_date, conj_lat, conj_lon, conj_alts, sat_alts)
+                    ]     
+        
+        msis_dat = np.array([msis_dat,msis_s])
         np.save(msis_file,msis_dat)
     else:
         print(f'Loading {msis_file}')
         msis_dat = np.load(msis_file)
-        
     
-    
-    return msis_dat, conj_data.reset_index(), conj_date, conj_dens, conj_alts, alts
+    return msis_dat, conj_data.reset_index(), conj_date, \
+        conj_dens, conj_alts, sat_alts, alts
 
 
 def exp_fit(x,j,h) -> float:
@@ -213,13 +233,41 @@ def lin_fit(x,a,b):
     return a*x+b
 
     
-def den_norm(sat: str='ch',):
+def den_norm(sat: str='ch',
+             storm_times=True, 
+             storm_txt=
+             'D:\\GitHub\\SatDrag\\data\\storms_drag_epochs_no_overlap.txt'):
     
     # get the data for fitting
-    msis_d, conj_sdat, conj_date, conj_dens, conj_alts, alts = \
+    msis_arr, conj_sdat, conj_date, conj_dens, conj_alts, sat_alts, alts = \
         gen_msis_profiles(sat=sat)
+    
+    storm_val = np.empty(conj_date.shape[0],dtype=int)
+    storm_val[:] = 1 
+    # read storm times
+    print('Readin Storm Times')
+    storm_time = pd.read_csv(storm_txt, header=None, skiprows=1, 
+                     sep='\s+', names = ['t_st','t_dst','t_en'], 
+                     parse_dates=[0, 1, 2])
+            
+    for index, row in storm_time.iterrows():
+        stp = (conj_date>=row['t_st']) & (conj_date<row['t_en'])
+        storm_val[stp] = -1
         
+    
+    
+    # add storm times to the data
+    # read in storm start and end times
+    if storm_times:
+        print('running storm times')
+        stp = storm_val==-1
+        msis_d = msis_arr[0,:,:]
+        msis_d[stp,:] = msis_arr[1,stp,:]
         
+    else:
+        print('Running all normal times')
+        msis_d = msis_arr[0,:,:]
+    
     
     # fit a line to the msis density profiles so the
     # exponential fit can be seeded
@@ -235,19 +283,24 @@ def den_norm(sat: str='ch',):
     exp_d = np.array(exp_d)
     
     rho0 = conj_dens/np.exp(-conj_alts/1000./exp_d[:,1])
-    sat_den = rho0*np.exp(-conj_sdat[f'alt_{sat}'].to_numpy()/1000./exp_d[:,1])
+    mod_den1 = rho0*np.exp(-conj_sdat[f'alt_{sat}'].to_numpy()/1000./exp_d[:,1])
     
     #TODO test everything below this
+    #this needs to be simplified now that we 
+    # are calcuting msis_profiles at the location of the satellites
+    # altitude in previous function call is not in km, it's in m's, 
+    #  fix it
     
     conj_pos = [np.abs(alts-sat_alt/1000.).argmin() for sat_alt in conj_alts]
-    sat_pos = [np.abs(alts-sat_alt/1000.).argmin
+    sat_pos = [np.abs(alts-sat_alt/1000.).argmin()
                for sat_alt in conj_sdat['alt_ch'].to_numpy()]
     
-    den_ratio = conj_dens/msis_d[:,conj_pos]
-    sat_dens2 = den_ratio*msis_d[:,sat_pos]
+    den_ratio = conj_dens/msis_d[np.arange(0,len(conj_pos),1),conj_pos]
+    mod_den2 = den_ratio*msis_d[np.arange(0,len(conj_pos),1),sat_pos]
     
+    obs_den = conj_sdat[f'dens_x_{sat}']
     
-    return sat_den, conj_sdat.reset_index()
+    return conj_dens, obs_den, mod_den1, mod_den2, msis_d, storm_val
 
     
     
