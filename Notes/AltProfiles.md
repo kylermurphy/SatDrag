@@ -23,6 +23,29 @@ An example of a point when GOCE and GRACE are close is shown below. Here at 2013
 
 ![GOCE (purple), GRACE (teal) @ 03:17](GOCE_GRACE_ex.png)
 
-For this study we derive altitude profiles at GRACE for periods of time when the GRACE satellite is within 5$^{\circ}$ longitude 1$^{\circ}$ latitude of either CHAMP or GOCE within a single GRACE orbit (90 minutes). This yeilds 69,216 conjunctions between GRACE and GOCE, and 202,046 conjunctions between GRACE and CHAMP.  
+For this study we derive altitude profiles at GRACE for periods of time when the GRACE satellite is within $5^{\circ}$ longitude $1^{\circ}$ latitude of either CHAMP or GOCE within a single GRACE orbit (90 minutes). This yeilds 69,216 conjunctions between GRACE and GOCE, and 202,046 conjunctions between GRACE and CHAMP. Note, MSIS can run in a normal mode and a geomagnetic storm mode. Here we have generated time-series of MSIS profiles using only the normal mode and then a mixed time-series where the geomagnetic storm mode is during storm-times using the our storm list. We compare the observed density to the two modeled densities using both time-series.   
 
-![alt text](orbit-overview.png)
+![Satellite Orbits](orbit-overview.png)
+
+## Comparisons
+
+
+
+The figures below show metrics comparing the two modelled densities with observed densities from GOCE and CHAMP.
+- Top: quiet and storm-times
+- Bottom: all quiet
+- Left: Observed-Modelled (difference)
+- Right: Observed-Modelled (ratio)
+
+### GOCE
+
+![GOCE quiet and storm-times](GOCE_QuietStorm.png)
+![GOCE quiet-times](GOCE_Quiet.png)
+
+### CHAMP
+
+![CHAMP quiet and storm-times](CHAMP_QuietStorm.png)
+![CHAMP quiet-times](CHAMP_Quiet.png)
+
+
+The figure below
