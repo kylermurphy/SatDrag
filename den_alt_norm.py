@@ -291,20 +291,81 @@ def den_norm(sat: str='ch',
     mod_den2 = den_ratio*msis_d[:,-1]
     
     # calculte the new profiles as well
-    mod_profile = [ prof*ratio for prof, ratio in zip(msis_d, den_ratio)]
+    mod_profile = [prof*ratio for prof, ratio in zip(msis_d, den_ratio)]
     mod_profile = np.array(mod_profile)
     
     obs_den = conj_sdat[f'dens_x_{sat}']
     
     return conj_dens, obs_den, mod_den1, mod_den2, mod_profile, msis_d, alts, \
-        storm_val
+        storm_times
 
     
+def mod_residuals(sat: str='ch',
+                  storm_times=True,
+                  density=True,
+                  lq=0.05,
+                  uq=0.99):
+ 
+    if sat == 'ch':
+        sat_t='CHAMP'
+    elif sat == 'go':
+        sat_t='GOCE'
+    else:
+        sat_t='CHAMP'
+        sat='ch'
+    
+    if storm_times:
+        geo_t = 'Quiet & Storm Times'
+    else:
+        geo_t = 'All Quiet'
+     
+    conj_dens, obs_den, \
+    mod_den1, mod_den2, \
+    mod_profile, msis_d, \
+    alts, storm_val = den_norm(sat=sat, storm_times=storm_times)
     
     
+    resid_1 = (obs_den-mod_den1)*1E12
+    resid_2 = (obs_den-mod_den2)*1E12
     
-conj_dens, obs_den, mod_den1, mod_den2, mod_profile, msis_d, alts, \
-    storm_val = den_norm()    
+    res_min = np.min([resid_1.quantile(lq),resid_2.quantile(lq)])
+    res_max = np.max([resid_1.quantile(uq),resid_2.quantile(uq)])
+    
+    res_b1 = np.histogram_bin_edges(resid_1,bins='fd', range=[res_min,res_max])
+    res_b2 = np.histogram_bin_edges(resid_2,bins='fd', range=[res_min,res_max])
+    
+    ratio_1 = obs_den/mod_den1
+    ratio_2 = obs_den/mod_den2
+    
+    rat_max = np.max([ratio_1.quantile(uq),ratio_2.quantile(uq)])
+    
+    rat_b1 = np.histogram_bin_edges(ratio_1,bins='fd', range=[0,rat_max])
+    rat_b2 = np.histogram_bin_edges(ratio_2,bins='fd', range=[0,rat_max])
+        
+    plt.rcParams.update({'font.size': 8})
+    fig, ax = plt.subplots(1,2, figsize=(6,3))
+    
+    density=True
+    
+    ax[0].hist(resid_1,bins=res_b1, alpha = 1, \
+                 label='Scale Height', density=density, color='steelblue') 
+    ax[0].hist(resid_2,bins=res_b2, alpha = 0.5, \
+                 label='Profile Ratio', density=density, color='red')
+    ax[0].legend(fontsize=8)
+    ax[0].set(title='Residuals: Obs-Mod', xlabel='Residuals', 
+              ylabel='Probability')
+    
+    ax[1].hist(ratio_1,bins=rat_b1, alpha = 1, \
+                 label='Scale Height', density=density, color='steelblue') 
+    ax[1].hist(ratio_2,bins=rat_b2, alpha = 0.5, \
+                 label='Profile Ratio', density=density, color='red')
+    ax[1].legend(fontsize=8) 
+    ax[1].set(title='Ratio: Obs/Mod', xlabel='Ratio', 
+          ylabel='Probability')
+
+    fig.suptitle(f'{geo_t} - {sat_t}', fontsize=10)       
+
+
     
     
     
