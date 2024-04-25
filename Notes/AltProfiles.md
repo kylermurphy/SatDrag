@@ -27,9 +27,7 @@ For this study we derive altitude profiles at GRACE for periods of time when the
 
 ![Satellite Orbits](orbit-overview.png)
 
-## Comparisons
-
-
+## Comparisons of Methods
 
 The figures below show metrics comparing the two modelled densities with observed densities from GOCE and CHAMP.
 - Top: quiet and storm-times
@@ -47,5 +45,11 @@ The figures below show metrics comparing the two modelled densities with observe
 ![CHAMP quiet and storm-times](CHAMP_QuietStorm.png)
 ![CHAMP quiet-times](CHAMP_Quiet.png)
 
+### Discussion
 
-The figure below
+- For both GOCE and CHAMP the ratio method works signifcantly better then the scale height method at predicting densities at lower altitudes then GRACE. This is because a single fixed scale height is not representitive of the density profile and thus the fit is not as good. While using the ratio provides a more accurate altidue profile and no functional form needs to be assumed. 
+- For both CHAMP and GOCE there is very little difference in the Quiet/Storm and Quiet metrics (residuals and ratios).
+- For both CHAMP and GOCE the normalization method tends to underestimate the desnity (residuals<0 and ratios>1). This is underestimation is exacerbated at lower altitudes (GOCE).
+
+## Residual Analysis - Profile Method Only
+
