@@ -241,25 +241,24 @@ def den_norm(sat: str='ch',
     # get the data for fitting
     msis_arr, conj_sdat, conj_date, conj_dens, conj_alts, sat_alts, alts = \
         gen_msis_profiles(sat=sat)
-    
-    storm_val = np.empty(conj_date.shape[0],dtype=int)
-    storm_val[:] = 1 
-    # read storm times
-    print('Readin Storm Times')
-    storm_time = pd.read_csv(storm_txt, header=None, skiprows=1, 
-                     sep='\s+', names = ['t_st','t_dst','t_en'], 
-                     parse_dates=[0, 1, 2])
-            
-    for index, row in storm_time.iterrows():
-        stp = (conj_date>=row['t_st']) & (conj_date<row['t_en'])
-        storm_val[stp] = -1
+          
         
-    
-    
     # add storm times to the data
     # read in storm start and end times
     if storm_times:
-        print('running storm times')
+        print('Running storm times')
+        storm_val = np.empty(conj_date.shape[0],dtype=int)
+        storm_val[:] = 1 
+        # read storm times
+        print('Reading Storm Times')
+        storm_time = pd.read_csv(storm_txt, header=None, skiprows=1, 
+                         sep='\s+', names = ['t_st','t_dst','t_en'], 
+                         parse_dates=[0, 1, 2])
+                
+        for index, row in storm_time.iterrows():
+            stp = (conj_date>=row['t_st']) & (conj_date<row['t_en'])
+            storm_val[stp] = -1
+        
         stp = storm_val==-1
         msis_d = msis_arr[0,:,:]
         msis_d[stp,:] = msis_arr[1,stp,:]
@@ -271,42 +270,41 @@ def den_norm(sat: str='ch',
     
     # fit a line to the msis density profiles so the
     # exponential fit can be seeded
-    lin_d = [curve_fit(lin_fit,alts,np.log(den))[0] for den in msis_d]
+    lin_d = [curve_fit(lin_fit,alts,np.log(den[:-2]))[0] for den in msis_d]
     
     # fit an exponential to msis density profiles
     exp_d = [
-            curve_fit(exp_fit,alts.astype('float64'),den.astype('float64'),
-            p0=[np.exp(lf[1]),-1/lf[0]])[0]
+            curve_fit(exp_fit,alts.astype('float64'),
+                      den[0:-2].astype('float64'),
+                      p0=[np.exp(lf[1]),-1/lf[0]])[0]
             for den, lf in zip(msis_d, lin_d)
             ]
     
     exp_d = np.array(exp_d)
     
+    # calculate density using the scale height
     rho0 = conj_dens/np.exp(-conj_alts/1000./exp_d[:,1])
     mod_den1 = rho0*np.exp(-conj_sdat[f'alt_{sat}'].to_numpy()/1000./exp_d[:,1])
     
-    #TODO test everything below this
-    #this needs to be simplified now that we 
-    # are calcuting msis_profiles at the location of the satellites
-    # altitude in previous function call is not in km, it's in m's, 
-    #  fix it
+    # calculate density by shifting the density profile to match grace
+    den_ratio = conj_dens/msis_d[:,-2]
+    mod_den2 = den_ratio*msis_d[:,-1]
     
-    conj_pos = [np.abs(alts-sat_alt/1000.).argmin() for sat_alt in conj_alts]
-    sat_pos = [np.abs(alts-sat_alt/1000.).argmin()
-               for sat_alt in conj_sdat['alt_ch'].to_numpy()]
-    
-    den_ratio = conj_dens/msis_d[np.arange(0,len(conj_pos),1),conj_pos]
-    mod_den2 = den_ratio*msis_d[np.arange(0,len(conj_pos),1),sat_pos]
+    # calculte the new profiles as well
+    mod_profile = [ prof*ratio for prof, ratio in zip(msis_d, den_ratio)]
+    mod_profile = np.array(mod_profile)
     
     obs_den = conj_sdat[f'dens_x_{sat}']
     
-    return conj_dens, obs_den, mod_den1, mod_den2, msis_d, storm_val
+    return conj_dens, obs_den, mod_den1, mod_den2, mod_profile, msis_d, alts, \
+        storm_val
 
     
     
     
     
-    
+conj_dens, obs_den, mod_den1, mod_den2, mod_profile, msis_d, alts, \
+    storm_val = den_norm()    
     
     
     
