@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 from pymsis import msis
 from scipy.optimize import curve_fit
-
+from sklearn import metrics 
 
 
 def gen_sat_data(sat: str='ch',
@@ -236,7 +236,9 @@ def lin_fit(x,a,b):
 def den_norm(sat: str='ch',
              storm_times=True, 
              storm_txt=
-             'D:\\GitHub\\SatDrag\\data\\storms_drag_epochs_no_overlap.txt'):
+             'D:\\GitHub\\SatDrag\\data\\storms_drag_epochs_no_overlap.txt',
+             gen=False,
+             data_dir='D:\\data\\SatDensities\\'):
     
     # get the data for fitting
     msis_arr, conj_sdat, conj_date, conj_dens, conj_alts, sat_alts, alts = \
@@ -245,11 +247,10 @@ def den_norm(sat: str='ch',
         
     # add storm times to the data
     # read in storm start and end times
+    storm_val = np.empty(conj_date.shape[0],dtype=int)
+    storm_val[:] = 1 
     if storm_times:
         print('Running storm times')
-        storm_val = np.empty(conj_date.shape[0],dtype=int)
-        storm_val[:] = 1 
-        # read storm times
         print('Reading Storm Times')
         storm_time = pd.read_csv(storm_txt, header=None, skiprows=1, 
                          sep='\s+', names = ['t_st','t_dst','t_en'], 
@@ -268,19 +269,32 @@ def den_norm(sat: str='ch',
         msis_d = msis_arr[0,:,:]
     
     
-    # fit a line to the msis density profiles so the
-    # exponential fit can be seeded
-    lin_d = [curve_fit(lin_fit,alts,np.log(den[:-2]))[0] for den in msis_d]
+    st_t = 'storm' if storm_times else 'nostorm'
+    # check if the fits to profiles have already been generated
+    fit_file = data_dir+f'msis_profile_fits_{sat}_{st_t}.npy'
+    fit_path = os.path.exists(fit_file)
     
-    # fit an exponential to msis density profiles
-    exp_d = [
-            curve_fit(exp_fit,alts.astype('float64'),
-                      den[0:-2].astype('float64'),
-                      p0=[np.exp(lf[1]),-1/lf[0]])[0]
-            for den, lf in zip(msis_d, lin_d)
-            ]
-    
-    exp_d = np.array(exp_d)
+    # derive profiles and save or open
+    if not fit_path or gen:
+        print(f'Running fits and saving fit file {fit_file}')
+        # fit a line to the msis density profiles so the
+        # exponential fit can be seeded
+        lin_d = [curve_fit(lin_fit,alts,np.log(den[:-2]))[0] for den in msis_d]
+        
+        # fit an exponential to msis density profiles
+        exp_d = [
+                curve_fit(exp_fit,alts.astype('float64'),
+                          den[0:-2].astype('float64'),
+                          p0=[np.exp(lf[1]),-1/lf[0]])[0]
+                for den, lf in zip(msis_d, lin_d)
+                ]
+        
+        exp_d = np.array(exp_d)
+        np.save(fit_file,exp_d)
+    else:
+        print(f'Loading {fit_file}')
+        exp_d = np.load(fit_file)
+        
     
     # calculate density using the scale height
     rho0 = conj_dens/np.exp(-conj_alts/1000./exp_d[:,1])
@@ -297,7 +311,7 @@ def den_norm(sat: str='ch',
     obs_den = conj_sdat[f'dens_x_{sat}']
     
     return conj_dens, obs_den, mod_den1, mod_den2, mod_profile, msis_d, alts, \
-        storm_times
+        storm_times, storm_val, conj_sdat 
 
     
 def mod_residuals(sat: str='ch',
@@ -322,11 +336,12 @@ def mod_residuals(sat: str='ch',
     conj_dens, obs_den, \
     mod_den1, mod_den2, \
     mod_profile, msis_d, \
-    alts, storm_val = den_norm(sat=sat, storm_times=storm_times)
+    alts, storm_val, storm_val, \
+    conj_sdat = den_norm(sat=sat, storm_times=storm_times)
     
     
-    resid_1 = (obs_den-mod_den1)*1E12
-    resid_2 = (obs_den-mod_den2)*1E12
+    resid_1 = (obs_den-mod_den1)#*1E12
+    resid_2 = (obs_den-mod_den2)#*1E12
     
     res_min = np.min([resid_1.quantile(lq),resid_2.quantile(lq)])
     res_max = np.max([resid_1.quantile(uq),resid_2.quantile(uq)])
@@ -367,11 +382,134 @@ def mod_residuals(sat: str='ch',
 
 
     
+def pro_residuals(sat: str='ch',
+                  storm_times=True,
+                  density=True,
+                  lq=0.02,
+                  uq=0.99):
+ 
+    if sat == 'ch':
+        sat_t='CHAMP'
+    elif sat == 'go':
+        sat_t='GOCE'
+    else:
+        sat_t='CHAMP'
+        sat='ch'
+    
+    if storm_times:
+        geo_t = 'Quiet & Storm Times'
+    else:
+        geo_t = 'All Quiet'
+     
+    conj_dens, obs_den, \
+    mod_den1, mod_den2, \
+    mod_profile, msis_d, \
+    alts, storm_val, storm_val, \
+    conj_sdat = den_norm(sat=sat, storm_times=storm_times) 
+    
+    diff_pro = obs_den-mod_den2
+    diff_act = obs_den-msis_d[:,-1]
+    diff_b = np.histogram_bin_edges(diff_pro,bins='fd',
+                range=[diff_pro.quantile(lq),diff_pro.quantile(uq)])
+    diff_ba = np.histogram_bin_edges(diff_act,bins='fd',
+                range=[diff_act.quantile(lq),diff_act.quantile(uq)])
+    
+    ratio_pro = obs_den/mod_den2
+    ratio_act = obs_den/msis_d[:,-1]
+    ratio_b = np.histogram_bin_edges(ratio_pro,bins='fd',
+                range=[ratio_pro.quantile(lq),ratio_pro.quantile(uq)])
+    ratio_ba = np.histogram_bin_edges(ratio_act,bins='fd',
+                range=[ratio_act.quantile(lq),ratio_act.quantile(uq)])
     
     
     
+    del_lat = conj_sdat['del_lat_near']
+    del_lon = conj_sdat['del_lon_near']
+    
+    r_ran = [ratio_b.min(),ratio_b.max()]
+    d_ran = [diff_b.min(),diff_b.max()]
+    
+    plt.rcParams.update({'font.size': 8})
+    fig, ax = plt.subplots(3,2, figsize=(6,9))
+    
+    ax[0,0].hist(diff_act,bins=diff_ba,density=density, \
+                 color='steelblue', label='MSIS Actual')
+    ax[0,0].hist(diff_pro,bins=diff_b,density=density, color='r', \
+                 alpha=0.5, label='MSIS Norm')
+    ylim = ax[0,0].get_ylim()
+    ax[0,0].plot([0,0],ylim,'k--')
+    ax[0,0].set_ylim(ylim)
+    ax[0,0].legend(fontsize=8)
+    ax[0,0].set(title='Residuals: Obs-Mod')
+    
+    ax[1,0].hist2d(diff_pro,del_lat,bins=50,range=[d_ran,[-0.25,0.25]])
+    ylim = ax[1,0].get_ylim()
+    ax[1,0].plot([0,0],ylim,'k--')
+    ax[1,0].set_ylim(ylim)
+    
+    ax[2,0].hist2d(diff_pro,del_lon,bins=50,range=[d_ran,[-5,5]])
+    ylim = ax[2,0].get_ylim()
+    ax[2,0].plot([0,0],ylim,'k--')
+    ax[2,0].set_ylim(ylim)
+    
+    # ratios
+    ax[0,1].hist(ratio_act,bins=ratio_ba,density=density, \
+                 color='steelblue', label='MSIS Actual')
+    ax[0,1].hist(ratio_pro,bins=ratio_b,density=density, color='r', \
+                 alpha=0.5, label='MSIS Norm')
+    ylim = ax[0,1].get_ylim()
+    ax[0,1].plot([1,1],ylim,'k--')
+    ax[0,1].set_ylim(ylim)
+    ax[0,1].legend(fontsize=8)
+    ax[0,1].set(title='Ratio: Obs/Mod')
+    
+    ax[1,1].hist2d(ratio_pro,del_lat,bins=50,range=[r_ran,[-0.25,0.25]])
+    ylim = ax[1,1].get_ylim()
+    ax[1,1].plot([1,1],ylim,'k--')
+    ax[1,1].set_ylim(ylim)
+    
+    ax[2,1].hist2d(ratio_pro,del_lon,bins=50,range=[r_ran,[-5,5]])
+    ylim = ax[2,1].get_ylim()
+    ax[2,1].plot([1,1],ylim,'k--')
+    ax[2,1].set_ylim(ylim)
+    
+    fig.suptitle(f'{geo_t} - {sat_t}', fontsize=10)   
+    plt.tight_layout()
+    
+    # calculate some metrics
+    nprof_mea = metrics.median_absolute_error(obs_den, mod_den2)
+    nmsis_mea = metrics.median_absolute_error(obs_den, msis_d[:,-1]) 
+    
+    # rms
+    nprof_rms = metrics.mean_squared_error(obs_den, mod_den2)
+    nmsis_rms = metrics.mean_squared_error(obs_den, msis_d[:,-1]) 
+    
+    # mape
+    nprof_mape = metrics.mean_absolute_percentage_error(obs_den, mod_den2)
+    nmsis_mape = metrics.mean_absolute_percentage_error(obs_den, msis_d[:,-1]) 
+    
+    # best is 1
+    nprof_ev = metrics.explained_variance_score(obs_den, mod_den2, multioutput='uniform_average')
+    nmsis_ev = metrics.explained_variance_score(obs_den, msis_d[:,-1], multioutput='uniform_average') 
+    
+    # r2 - best is 1
+    nprof_r2 = metrics.r2_score(obs_den, mod_den2)
+    nmsis_r2 = metrics.r2_score(obs_den, msis_d[:,-1]) 
+    
+    print(f'MEA: {nprof_mea}, {nmsis_mea}')
+    print(f'RMS: {nprof_rms}, {nmsis_rms}')
+    print(f'MAPE: {nprof_mape}, {nmsis_mape}')
+    print(f'EV: {nprof_ev}, {nmsis_ev}')
+    print(f'R2: {nprof_r2}, {nmsis_r2}')
     
     
+    print('fin')
+    
+    return 0 
+    
+    
+    
+
     
     
     

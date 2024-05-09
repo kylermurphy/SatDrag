@@ -53,3 +53,47 @@ The figures below show metrics comparing the two modelled densities with observe
 
 ## Residual Analysis - Profile Method Only
 
+The profile method has the best residuals of the two methods, but how do these residuals vary with the shift in latitude and longitude between the two satellites and how do these residuals compare to the actual MSIS profiles? 
+
+### CHAMP
+
+The residuals calculated from the normalized profiles are smaller and better distributed then those calculated using the actual MSIS profiles. There doesn't seem to be a significant variation with either delta latitude or longitude. 
+
+![CHAMP quiet and storm-times](CHAMP_profile_residuals.png)
+
+### GOCE
+
+Compared to CHAMP the residuals normalized profile are not as well organized. The difference have a longer tail but the ratios are more closely centered on 1. Overall the normalized profile residuals are wider.
+
+![CHAMP quiet and storm-times](GOCE_profiles_residuals.png)
+
+### Metrics
+
+CHAMP
+| Metric | Profile Norm | MSIS | Exp |
+|---|---|---|---|
+| Median Absolute Error | **2.49** | 7.00 | E-13 |
+| RMS | 3.05 | **1.75** | E-24 |
+| Median Absolute Percent Error | **0.17** | 0.52 | X |
+| Explained Variance | 0.56 | **0.82** | X |
+| Correlation | 0.56 | **0.74** | X |
+
+GOCE
+| Metric | Profile Norm | MSIS | Exp |
+|---|---|---|---|
+| Median Absolute Error | 5.62 | **4.33** | E-11 |
+| RMS | 13.1 | **5.50** | E-23 |
+| Median Absolute Percent Error | 0.26 | **0.22** | X |
+| Explained Variance | 0.49 | **0.81** | X |
+| Correlation | 0.49 | **0.79** | X |
+
+## Satellite Constelations
+
+| Constellation | Altitude (kms) |
+|---|---|
+| Project Kuiper | 590-630 |
+| Starlink | 340-614 | 
+| Telesat | 1300 | 
+| Iridium | 780 | 
+| GDC | 300-400 |
+| OneWeb | 1200 |
