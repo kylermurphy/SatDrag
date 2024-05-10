@@ -89,7 +89,7 @@ GOCE
 
 ## Satellite Constelations
 
-| Constellation | Altitude (kms) |
+| Constellation | Altitude (km) |
 |---|---|
 | Project Kuiper | 590-630 |
 | Starlink | 340-614 | 

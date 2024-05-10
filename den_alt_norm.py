@@ -310,7 +310,8 @@ def den_norm(sat: str='ch',
     
     obs_den = conj_sdat[f'dens_x_{sat}']
     
-    return conj_dens, obs_den, mod_den1, mod_den2, mod_profile, msis_d, alts, \
+    return conj_dens, conj_alts, obs_den, \
+        mod_den1, mod_den2, mod_profile, msis_d, alts, \
         storm_times, storm_val, conj_sdat 
 
     
@@ -333,7 +334,7 @@ def mod_residuals(sat: str='ch',
     else:
         geo_t = 'All Quiet'
      
-    conj_dens, obs_den, \
+    conj_dens, conj_alts, obs_den, \
     mod_den1, mod_den2, \
     mod_profile, msis_d, \
     alts, storm_val, storm_val, \
@@ -401,11 +402,11 @@ def pro_residuals(sat: str='ch',
     else:
         geo_t = 'All Quiet'
      
-    conj_dens, obs_den, \
+    conj_dens, conj_alts, obs_den, \
     mod_den1, mod_den2, \
     mod_profile, msis_d, \
     alts, storm_val, storm_val, \
-    conj_sdat = den_norm(sat=sat, storm_times=storm_times) 
+    conj_sdat = den_norm(sat=sat, storm_times=storm_times)
     
     diff_pro = obs_den-mod_den2
     diff_act = obs_den-msis_d[:,-1]
@@ -507,13 +508,79 @@ def pro_residuals(sat: str='ch',
     
     return 0 
     
+
+def fitting_ex():
+    
+    conj_dens, conj_alts, obs_den, \
+    mod_den1, mod_den2, \
+    mod_profile, msis_d, \
+    alts, storm_val, storm_val, \
+    conj_sdat = den_norm()
+
+    #TODO
+    # show when method 1 works best
+    # show when method 2 works best
+    # show when they are both the worst
+
+    p_err = np.array([metrics.mean_squared_error(x[0:-2], y[0:-2])
+             for x, y in zip(mod_profile,msis_d)])
     
     
+    #best and worst method 1
+    p1_w = np.abs(np.array(mod_den1[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmax()
+    p1_b = np.abs(np.array(mod_den1[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmin() 
+    
+    
+    #best and worst method 2
+    p2_w = np.abs(np.array(mod_den2[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmax()
+    p2_b = np.abs(np.array(mod_den2[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmin()
+
+
+    p_pos = np.abs(np.array(msis_d[0:50000,-1]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmax()
+    
+    
+    # calculate density using the scale height
+    fit_file = 'D:\data\SatDensities\msis_profile_fits_ch_storm.npy'
+    exp_d = np.load(fit_file)
+    rho0 = conj_dens/np.exp(-conj_alts/1000./exp_d[:,1])
+    
+    p_pos = [p1_b,p1_w,p2_b,p2_w]
+    p_tit = ['Fit - Best', 'Fit - Worst', 'Shift - Best', 'Shift - Worst']
+    
+    fig, ax = plt.subplots(2,2, figsize=(8,6))
+    
+    for ap, pp, pt in zip(ax.flatten(),p_pos,p_tit):
+        # profile of the fit to MSIS data
+        mfit_profile = exp_fit(alts,exp_d[pp,0],exp_d[pp,1])
+        # profile of the fit shifted to satellite data
+        ofit_profile = exp_fit(alts,rho0[pp],exp_d[pp,1])
+    
+    
+        ap.plot(msis_d[pp,0:-2], alts, 
+                label="MSIS Profile", color='steelblue')
+        ap.plot(mod_profile[pp,0:-2], alts,
+                label="Shift Profile to GRACE", color='crimson')
+        ap.plot(conj_dens[pp], 
+                conj_alts[pp]/1000.,
+                marker='D', label="GRACE", color='darkorange')
+        ap.plot(conj_sdat.loc[pp,'dens_x_ch'],
+                conj_sdat.loc[pp,'alt_ch']/1000.,
+                marker='X', label='CHAMP', color='darkorange')
+        ap.plot(mfit_profile,alts,color='steelblue',
+                label='Fit to MSIS',linestyle='dashed')
+        ap.plot(ofit_profile,alts, color='crimson',
+                label='Fit Shifted to GRACE',linestyle='dashed')
+        ap.legend()
+        ap.set_title(pt)
+        ap.set_ylabel('Altitude - km')
+        ap.set_xlabel('Density - kg/m$\mathregular{^3}$')
+        
+
 
     
-    
-    
-    
+    return fig, ax
+# running stuff  
+fig, ax = fitting_ex()    
     
     
     
