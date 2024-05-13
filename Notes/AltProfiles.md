@@ -6,8 +6,8 @@ Using MSIS (pymsis) modelled density profiles create a density profile at the lo
 
 Two methods will be tested: 
 
-1. Determine the ratio between the density at the altitude of GRACE B. Use this ratio to shift the MSIS density profile to match the observed density at the altitude of GRACE B. 
-1. Calculate the scale height from the MSIS model and apply this scale height to GRACE B data to derive an altitude profile. 
+1. Shift method - Determine the ratio between the density at the altitude of GRACE B. Use this ratio to shift the MSIS density profile to match the observed density at the altitude of GRACE B. 
+1. Fit method - Calculate the scale height from the MSIS model and apply this scale height to GRACE B data to derive an altitude profile. 
 
 Both methods will be compared to CHAMP and GOCE data to determine the best method for deriving a density altitude profile from observations.
 
@@ -29,6 +29,10 @@ For this study we derive altitude profiles at GRACE for periods of time when the
 
 ## Comparisons of Methods
 
+The figure below shows example of both methods used to derive altitude profiles from combining MSIS and GRACE data. The derived/modelled profililes are then compared to CHAMP observations. For both methods we consider a good fit (left) as well as a poor fit (right). 
+
+![Examples of the two fitting and normalization methods to derive altitude profiles](FitExample.png)
+()
 The figures below show metrics comparing the two modelled densities with observed densities from GOCE and CHAMP.
 - Top: quiet and storm-times
 - Bottom: all quiet

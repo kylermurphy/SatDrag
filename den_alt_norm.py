@@ -527,16 +527,21 @@ def fitting_ex():
     
     
     #best and worst method 1
-    p1_w = np.abs(np.array(mod_den1[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmax()
-    p1_b = np.abs(np.array(mod_den1[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmin() 
+    p1_w = np.abs(np.array(
+        mod_den1[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmax()
+    p1_b = np.abs(np.array(
+        mod_den1[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmin() 
     
     
     #best and worst method 2
-    p2_w = np.abs(np.array(mod_den2[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmax()
-    p2_b = np.abs(np.array(mod_den2[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmin()
+    p2_w = np.abs(np.array(
+        mod_den2[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmax()
+    p2_b = np.abs(np.array(
+        mod_den2[0:50000]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmin()
 
 
-    p_pos = np.abs(np.array(msis_d[0:50000,-1]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmax()
+    p_pos = np.abs(np.array(
+        msis_d[0:50000,-1]-conj_sdat.loc[0:50000-1,'dens_x_ch'])).argmax()
     
     
     # calculate density using the scale height
