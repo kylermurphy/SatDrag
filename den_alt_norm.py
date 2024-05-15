@@ -48,11 +48,15 @@ def gen_sat_data(sat: str='ch',
     # process satellite data
     if not sat_path or gen:
         # read in grace b data
-        gr, gr_u, gr_m = data_io.toleos_den.load_toleos(sat='gb',sdate=sdate,edate=edate)
-        sat_dat, sat_u, sat_m = data_io.toleos_den.load_toleos(sat=sat,sdate=sdate,edate=edate)
+        gr, gr_u, gr_m = \
+            data_io.toleos_den.load_toleos(sat='gb',sdate=sdate,edate=edate)
+        sat_dat, sat_u, sat_m = \
+            data_io.toleos_den.load_toleos(sat=sat,sdate=sdate,edate=edate)
     
         if sat == 'ch':
-            sat_dat = sat_dat.rename(columns={'rho_x':'dens_x', 'rho_mean':'dens_mean'})
+            sat_dat = \
+                sat_dat.rename(
+                    columns={'rho_x':'dens_x', 'rho_mean':'dens_mean'})
     
         #drop some columns
         gr = gr[cols]
