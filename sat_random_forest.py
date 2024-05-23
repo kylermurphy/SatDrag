@@ -435,10 +435,9 @@ def metric_plot(plot=True,
     d_mod = ['SI','FI','FI_GEO']
     d_leg = ['Solar', 'FISM', 'FSIM/Geo']
     
-    metr = pd.DataFrame()
-    
+    metr = pd.DataFrame()    
     for mod,leg in zip(d_mod,d_leg):
-        
+
         with open(d_dir+f'{mod}_RFdat.pkl','rb') as f:
             print(f)
             t = pickle.load(f)[0].reset_index()
