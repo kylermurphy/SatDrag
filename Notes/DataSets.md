@@ -72,4 +72,10 @@ For operational purpsoses a model using GOES EUVS and XRS data may be the best.
 - EUVS
     - GOES 14,15,16,17
 
+## XRS
+
+**XRS** data does **not** corelate with density.
+
+## EUV
+
 
