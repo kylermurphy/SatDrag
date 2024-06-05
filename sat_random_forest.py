@@ -30,17 +30,16 @@ rf_params = {
     }
 
 grid_space = {
-    "n_estimators": [300,500,750,1000],
+    "n_estimators": [100,300,500,750,1000],
     "max_depth": [None],
-    "min_samples_split": [2],
+    "min_samples_split": [2,50,10,20],
     "min_samples_leaf":[2,5,10,20],
-    "max_features":[0.5,1,2,4]
+    "max_features":[0.5,1,2,4,'sqrt','log2']
     }
 
 def dat_create(dat, col, log_col, lt_col, y_col, t_col):
 
     x_dat = dat[col+t_col+[y_col]].dropna().copy()
-    
 
     if log_col:
        for i in log_col:
@@ -52,8 +51,12 @@ def dat_create(dat, col, log_col, lt_col, y_col, t_col):
     if lt_col:
         for i in lt_col:
             try:
-                x_dat[f'cos_{i}'] = np.cos(dat[i]*2*np.pi/24.)
-                x_dat[f'sin_{i}'] = np.sin(dat[i]*2*np.pi/24.)
+                if dat[i].max() > 24:
+                    x_dat[f'cos_{i}'] = np.cos(dat[i]*2*np.pi/360.)
+                    x_dat[f'sin_{i}'] = np.sin(dat[i]*2*np.pi/360.)
+                else:
+                    x_dat[f'cos_{i}'] = np.cos(dat[i]*2*np.pi/24.)
+                    x_dat[f'sin_{i}'] = np.sin(dat[i]*2*np.pi/24.)    
             except:
                 print(f'Could not add {i} as a cos/sin time column')
     
@@ -300,7 +303,6 @@ def rf_tune(col=['1300_02', 'SYM_H index','SatLat'],
              lt_col=['SatMagLT'], 
              grid_space=grid_space, 
              target_dat='D:\\data\\SatDensities\\satdrag_database_grace_B.hdf5', 
-             oos_dat='D:\\data\\SatDensities\\satdrag_database_grace_A.hdf5',
              n_repeats=4,
              s_sz=100000,
              scoring='neg_mean_absolute_error',
@@ -309,7 +311,10 @@ def rf_tune(col=['1300_02', 'SYM_H index','SatLat'],
     # create data sets
     kcol = [col,[y_col],[t_col],lt_col]
     kflt = [item for sublist in kcol for item in sublist]
+    # read in target data
     df = pd.read_hdf(target_dat)
+    #take a random sample of the target data
+    # to help reduce number of points
     df = df[kflt].dropna().sample(s_sz)
 
     reg_x, reg_y = dat_create(dat=df,col=col,log_col=log_col,lt_col=lt_col,
@@ -482,10 +487,6 @@ def metric_plot(plot=True,
        if sfig:
            f.savefig(os.path.join(sdir,sname), dpi=300, format='pdf')
     return metr    
-    
-    
-
-    
     
     
     
