@@ -41,7 +41,7 @@ The figures below show metrics comparing the two modelled densities with observe
 
 ### GOCE
 
-![GOCE quiet and storm-times](GOCE_QuietStorm.png)
+![GOCE quiet and storm-times](Figures\GOCE_QuietStorm.png)
 ![GOCE quiet-times](GOCE_Quiet.png)
 
 ### CHAMP
