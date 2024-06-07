@@ -58,5 +58,23 @@ Take a subset of features with good correlations to look at the colinearity and 
 
 ![](Figures\Colinearity.png)
 
+There is a lot of colinearity in the x-ray bands (225 and 600 nm) and then again in the EUV bands.
+
+There is some colinearity in the OMNI data but it is genarlly limited. 
+
 ## Feature Selection 
+
+Based on the corelations and the colinearity we can limit the number of features we use in a new model. 
+
+- Base features/required variables
+    - dens_x, alt, lon, lat
+    - mlat, mlon, mlt
+    - DateTime
+    - storm, storm phase
+- FISM2
+    - 2500_03, 4300_09, 85550_13
+- OMNI
+    - B, AE, Sym-H, ASY_D, ASY_H
+- GOES
+    - irr_1216
 
