@@ -39,7 +39,7 @@ grid_space = {
 
 def dat_create(dat, col, log_col, lt_col, y_col, t_col):
 
-    x_dat = dat[col+t_col+[y_col]].dropna().copy()
+    x_dat = dat[col+[t_col]+[y_col]].dropna().copy()
 
     if log_col:
        for i in log_col:
@@ -303,7 +303,6 @@ def rf_tune(col=['1300_02', 'SYM_H index','SatLat'],
              lt_col=['SatMagLT'], 
              grid_space=grid_space, 
              target_dat='D:\\data\\SatDensities\\satdrag_database_grace_B.hdf5', 
-             n_repeats=4,
              s_sz=100000,
              scoring='neg_mean_absolute_error',
              refit=True):
@@ -489,6 +488,23 @@ def metric_plot(plot=True,
     return metr    
     
     
+#td = "C:\data\SatDensities\satdrag_database_grace_B_reduced_feature_v3.hdf5"
+#col = ['2500_03', '43000_09', '85550_13','irr_1216',
+#      'B', 'AE', 'SYM_H index', 'ASY_D index', 'ASY_H index',
+#       'alt', 'lat']
+#lt_col = ['lon']
+#y_col = 'dens_x'
+#t_col = 'DateTime'
     
+#mg = rf_tune(col=col, 
+#             y_col=y_col, 
+#             t_col=t_col, 
+#            log_col=False, 
+#             lt_col=lt_col, 
+#             grid_space=grid_space, 
+#             target_dat=td, 
+#             s_sz=100000,
+#             scoring=['neg_mean_absolute_error','r2'],
+#             refit=False)
     
     
