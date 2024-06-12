@@ -32,6 +32,10 @@ target_dat = "C:\data\SatDensities\satdrag_database_grace_B_reduced_feature_v3.h
 col = ['2500_03', '43000_09', '85550_13','irr_1216',
        'B', 'AE', 'SYM_H index', 'ASY_D index', 'ASY_H index',
        'alt', 'lat']
+
+col = ['2500_03', '43000_09', '85550_13','irr_1216',
+       'B', 'alt', 'lat']
+
 lt_col = ['lon']
 y_col = 'dens_x'
 t_col = 'DateTime'
@@ -56,7 +60,7 @@ df = df[kflt].dropna().sample(s_sz)
 
 reg_x, reg_y = srf.dat_create(dat=df,col=col,log_col=log_col,lt_col=lt_col,
                           y_col=y_col,t_col=t_col)
-reg_y = reg_y*(10**12)
+reg_y = reg_y*(10**14)
 
 del df
 gc.collect
