@@ -1,5 +1,7 @@
 # Altitude Profiles
 
+I've made a change here
+
 Test the best way to incorporate altitude into a single satellite density dataset. Density is obtained from [TOLEOS](http://thermosphere.tudelft.nl/index.html). 
 
 Using MSIS (pymsis) modelled density profiles create a density profile at the location of the GRACE satellites. This will be done by _scaling_ the modeled density profile to the density the GRACE satellites.
