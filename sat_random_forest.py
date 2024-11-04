@@ -39,7 +39,7 @@ grid_space = {
 
 def dat_create(dat, col, log_col, lt_col, y_col, t_col):
 
-    x_dat = dat[col+[t_col]+[y_col]].dropna().copy()
+    x_dat = dat[col+t_col+[y_col]].dropna().copy()
 
     if log_col:
        for i in log_col:
@@ -384,6 +384,10 @@ def rf_run(y_col='400kmDensity',
     data_labels = ['SI','FI','FI_GEO']
     data_sets = [si_col, fi_col, fgeo_col]
     
+    # labels
+    data_labels = ['FI_GEO']
+    data_sets = [fgeo_col]
+    
     for col, d_in in zip(data_sets,data_labels):
         
         rf_dat = rf_model(y_col=y_col, lt_col=lt_col,
@@ -506,5 +510,6 @@ def metric_plot(plot=True,
 #             s_sz=100000,
 #             scoring=['neg_mean_absolute_error','r2'],
 #             refit=False)
-    
+
+rf_run(app_f='_AIMFAHR')
     
