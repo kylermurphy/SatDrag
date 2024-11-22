@@ -192,14 +192,14 @@ def gen_msis_profiles(sat: str='ch',
         # add the altitude of grace and the second satelite at the end
         # of the altitude arrays
         msis_dat = [
-            msis.run(date,lat,lon, \
+            msis.run(date,lon,lat, \
             np.append(alts,[c_alt/1000.,s_alt/1000.]))[0,0,0,:,0] \
             for date, lat, lon, c_alt, s_alt, \
             in zip(conj_date, conj_lat, conj_lon, conj_alts, sat_alts)
                     ]
             
         msis_s = [
-            msis.run(date,lat,lon, \
+            msis.run(date,lon,lat, \
             np.append(alts,[c_alt/1000.,s_alt/1000.]), \
             geomagnetic_activity=-1)[0,0,0,:,0] \
             for date, lat, lon, c_alt, s_alt, \
@@ -588,8 +588,17 @@ def fitting_ex():
 
     
     return fig, ax
+
+
 # running stuff  
-fig, ax = fitting_ex()    
+#fig, ax = fitting_ex()    
+
+#a = den_norm(sat='go')
+
+#a = den_norm(storm_times=False)
+#a = den_norm(sat='go',storm_times=False)
+
+pro_residuals(sat='go')
     
     
     

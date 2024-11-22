@@ -42,12 +42,12 @@ The figures below show metrics comparing the two modelled densities with observe
 ### GOCE
 
 ![GOCE quiet and storm-times](Figures\GOCE_QuietStorm.png)
-![GOCE quiet-times](GOCE_Quiet.png)
+![GOCE quiet-times](Figures\GOCE_Quiet.png)
 
 ### CHAMP
 
 ![CHAMP quiet and storm-times](Figures\CHAMP_QuietStorm.png)
-![CHAMP quiet-times](CHAMP_Quiet.png)
+![CHAMP quiet-times](Figures\CHAMP_Quiet.png)
 
 ### Discussion
 
@@ -73,23 +73,26 @@ Compared to CHAMP the residuals normalized profile are not as well organized. Th
 
 ### Metrics
 
+Compare metrics when fitting to GRACE data and compare MSIS and the profile shift to either CHAMP or GOCE data. 
+
+
 CHAMP
 | Metric | Profile Norm | MSIS | Exp |
 |---|---|---|---|
-| Median Absolute Error | **2.49** | 7.00 | E-13 |
-| RMS | 3.05 | **1.75** | E-24 |
-| Median Absolute Percent Error | **0.17** | 0.52 | X |
-| Explained Variance | 0.56 | **0.82** | X |
-| Correlation | 0.56 | **0.74** | X |
+| Median Absolute Error | **1.42** | 6.09 | E-13 |
+| RMS | **4.55** | 8.05 | E-24 |
+| Median Absolute Percent Error | **0.10** | 0.36 | X |
+| Explained Variance | 0.93 | 0.93 | X |
+| Correlation | 0.93 | **0.88** | X |
 
 GOCE
 | Metric | Profile Norm | MSIS | Exp |
 |---|---|---|---|
-| Median Absolute Error | 5.62 | **4.33** | E-11 |
-| RMS | 13.1 | **5.50** | E-23 |
-| Median Absolute Percent Error | 0.26 | **0.22** | X |
-| Explained Variance | 0.49 | **0.81** | X |
-| Correlation | 0.49 | **0.79** | X |
+| Median Absolute Error | 3.06 | **2.82** | E-11 |
+| RMS | 3.15 | **2.34** | E-23 |
+| Median Absolute Percent Error | 0.14 | 0.14 | X |
+| Explained Variance | 0.88 | **0.91** | X |
+| Correlation | 0.87 | **0.91** | X |
 
 ## Satellite Constelations
 

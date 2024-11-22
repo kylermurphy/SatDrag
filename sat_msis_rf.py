@@ -49,8 +49,8 @@ def msis_prof(fn='D:/data/SatDensities/satdrag_database_grace_B_v3.hdf5',
         #flag should be set to -1
         
         pro_m = df.progress_apply(lambda x : msis.run(x.DateTime_gr,
-                              x.lat, 
-                              x.lon,
+                              x.lon, 
+                              x.lat,
                               np.append(alts,x.alt/1000.),
                               geomagnetic_activity=-1*x.storm)[0,0,0,:,0],
                               axis=1, raw=True)
