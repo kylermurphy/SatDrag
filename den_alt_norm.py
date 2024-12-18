@@ -598,7 +598,7 @@ def fitting_ex():
 #a = den_norm(storm_times=False)
 #a = den_norm(sat='go',storm_times=False)
 
-pro_residuals(sat='go')
+pro_residuals(sat='ch')
     
     
     
